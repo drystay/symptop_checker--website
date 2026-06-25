@@ -1,0 +1,12 @@
+{
+  "name": "symptomsense-proxy",
+  "version": "1.0.0",
+  "description": "Local proxy server for SymptomSense AI health checker",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
