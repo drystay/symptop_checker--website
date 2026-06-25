@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SymptomSense — AI Health Checker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2230;
+    --border: #2a3444;
+    --accent: #4fffb0;
+    --accent-dim: rgba(79,255,176,0.1);
+    --accent-mid: rgba(79,255,176,0.25);
+    --text: #e6edf3;
+    --text-muted: #7d8fa8;
+    --text-dim: #4a5568;
+    --warn: #f6ad55;
+    --danger: #fc8181;
+    --radius: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    border: 1px solid var(--accent-mid);
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--accent-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 64px 40px 40px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 300;
+    max-width: 500px;
+    margin: 0 auto 12px;
+  }
+
+  .disclaimer-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--warn);
+    background: rgba(246,173,85,0.08);
+    border: 1px solid rgba(246,173,85,0.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    margin-top: 8px;
+  }
+
+  /* FORM */
+  .form-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  input, select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  input::placeholder { color: var(--text-dim); }
+
+  select option { background: var(--surface2); }
+
+  /* SYMPTOM CHIPS */
+  .symptom-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--bg);
+    color: var(--text-muted);
+    user-select: none;
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+
+  .chip.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .symptom-custom {
+    display: flex;
+    gap: 10px;
+  }
+
+  .symptom-custom input { flex: 1; }
+
+  .add-btn {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-mid);
+    color: var(--accent);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .add-btn:hover { background: var(--accent-mid); }
+
+  .selected-symptoms {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .selected-chip {
+    padding: 4px 10px 4px 12px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-mid);
+    color: var(--accent);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .selected-chip button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0;
+    opacity: 0.6;
+  }
+
+  .selected-chip button:hover { opacity: 1; }
+
+  /* SEVERITY */
+  .severity-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .sev-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .sev-btn:hover { border-color: var(--text-muted); }
+  .sev-btn.active-mild { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+  .sev-btn.active-mod  { border-color: var(--warn);   background: rgba(246,173,85,0.1); color: var(--warn); }
+  .sev-btn.active-sev  { border-color: var(--danger);  background: rgba(252,129,129,0.1); color: var(--danger); }
+
+  /* ANALYZE BTN */
+  .analyze-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #0d1117;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .analyze-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(79,255,176,0.3); }
+  .analyze-btn:active { transform: translateY(0); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* RESULTS */
+  #results {
+    max-width: 680px;
+    margin: 0 auto 80px;
+    padding: 0 24px;
+    display: none;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 16px;
+  }
+
+  .result-card h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+
+  .result-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 20px;
+  }
+
+  .result-body {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #c9d1d9;
+  }
+
+  .result-body h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin: 24px 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .result-body h3:first-child { margin-top: 0; }
+
+  .result-body ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .result-body ul li {
+    padding: 6px 0 6px 18px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+
+  .result-body ul li:last-child { border-bottom: none; }
+
+  .result-body ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 0.75rem;
+  }
+
+  .urgency-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .urgency-low  { background: rgba(79,255,176,0.08);  border: 1px solid var(--accent-mid);             color: var(--accent); }
+  .urgency-med  { background: rgba(246,173,85,0.08);  border: 1px solid rgba(246,173,85,0.3);           color: var(--warn);   }
+  .urgency-high { background: rgba(252,129,129,0.08); border: 1px solid rgba(252,129,129,0.3);          color: var(--danger); }
+
+  /* LOADING */
+  .loading-dots {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  /* dots inside green button → dark colour */
+  .analyze-btn .loading-dots span {
+    width: 6px; height: 6px;
+    background: #0d1117;
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+  }
+
+  /* dots inside result area → accent colour */
+  .result-loading .loading-dots span {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0.2; }
+    40%            { opacity: 1;   }
+  }
+
+  /* streaming cursor */
+  .streaming-cursor::after {
+    content: '▍';
+    animation: blink 0.8s infinite;
+    color: var(--accent);
+    font-size: 0.9em;
+  }
+
+  /* error state */
+  .error-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(252,129,129,0.08);
+    border: 1px solid rgba(252,129,129,0.3);
+    border-radius: 8px;
+    color: var(--danger);
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .error-msg .error-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+  .final-disclaimer {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 0 24px 40px;
+    max-width: 680px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 20px; }
+    .hero { padding: 40px 20px 28px; }
+    .form-wrap, #results { padding: 0 16px 60px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .card { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-dot"></div>
+  <div class="logo-text">Symptom<span>Sense</span></div>
+  <div class="badge">AI-POWERED</div>
+</header>
+
+<div class="hero">
+  <h1>What might your body be <em>telling you?</em></h1>
+  <p>Enter your details and symptoms — our AI will suggest possible conditions and next steps.</p>
+  <div class="disclaimer-banner">⚠ For informational use only — not a medical diagnosis</div>
+</div>
+
+<div class="form-wrap">
+
+  <!-- Personal Info -->
+  <div class="section-label">Personal Details</div>
+  <div class="card">
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="e.g. Rahul Sharma">
+      </div>
+      <div class="field">
+        <label>Age (years)</label>
+        <input type="number" id="age" placeholder="e.g. 28" min="1" max="120">
+      </div>
+      <div class="field">
+        <label>Biological Sex</label>
+        <select id="sex">
+          <option value="">Select…</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other / Prefer not to say</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Weight (kg)</label>
+        <input type="number" id="weight" placeholder="e.g. 70" min="1" max="300">
+      </div>
+      <div class="field">
+        <label>Height (cm)</label>
+        <input type="number" id="height" placeholder="e.g. 175" min="50" max="250">
+      </div>
+    </div>
+  </div>
+
+  <!-- Symptoms -->
+  <div class="section-label">Symptoms</div>
+  <div class="card">
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;">Select common symptoms or type your own:</p>
+    <div class="symptom-grid" id="commonChips">
+      <div class="chip" onclick="toggleChip(this)">Fever</div>
+      <div class="chip" onclick="toggleChip(this)">Headache</div>
+      <div class="chip" onclick="toggleChip(this)">Cough</div>
+      <div class="chip" onclick="toggleChip(this)">Fatigue</div>
+      <div class="chip" onclick="toggleChip(this)">Sore throat</div>
+      <div class="chip" onclick="toggleChip(this)">Runny nose</div>
+      <div class="chip" onclick="toggleChip(this)">Body aches</div>
+      <div class="chip" onclick="toggleChip(this)">Nausea</div>
+      <div class="chip" onclick="toggleChip(this)">Vomiting</div>
+      <div class="chip" onclick="toggleChip(this)">Diarrhea</div>
+      <div class="chip" onclick="toggleChip(this)">Chest pain</div>
+      <div class="chip" onclick="toggleChip(this)">Shortness of breath</div>
+      <div class="chip" onclick="toggleChip(this)">Dizziness</div>
+      <div class="chip" onclick="toggleChip(this)">Rash</div>
+      <div class="chip" onclick="toggleChip(this)">Joint pain</div>
+      <div class="chip" onclick="toggleChip(this)">Abdominal pain</div>
+      <div class="chip" onclick="toggleChip(this)">Loss of appetite</div>
+      <div class="chip" onclick="toggleChip(this)">Night sweats</div>
+    </div>
+
+    <div class="symptom-custom">
+      <input type="text" id="customSymptom" placeholder="Describe another symptom…" onkeydown="if(event.key==='Enter') addCustom()">
+      <button class="add-btn" onclick="addCustom()">+ Add</button>
+    </div>
+
+    <div class="selected-symptoms" id="selectedSymptoms"></div>
+
+    <div style="margin-top:20px;">
+      <label style="display:block;margin-bottom:8px;">Severity</label>
+      <div class="severity-row">
+        <button class="sev-btn" onclick="setSev(this,'mild','active-mild')">😐 Mild</button>
+        <button class="sev-btn" onclick="setSev(this,'moderate','active-mod')">😟 Moderate</button>
+        <button class="sev-btn" onclick="setSev(this,'severe','active-sev')">😰 Severe</button>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="field">
+        <label>Duration</label>
+        <select id="duration">
+          <option value="">How long?</option>
+          <option value="less than 1 day">Less than 1 day</option>
+          <option value="1–3 days">1–3 days</option>
+          <option value="4–7 days">4–7 days</option>
+          <option value="1–2 weeks">1–2 weeks</option>
+          <option value="more than 2 weeks">More than 2 weeks</option>
+          <option value="chronic / ongoing">Chronic / ongoing</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Pre-existing Conditions (optional)</label>
+        <input type="text" id="conditions" placeholder="e.g. diabetes, hypertension">
+      </div>
+    </div>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+    Analyze Symptoms
+  </button>
+</div>
+
+<!-- Results -->
+<div id="results">
+  <div class="section-label">AI Analysis</div>
+  <div class="result-card">
+    <div id="resultInner"></div>
+  </div>
+  <div class="final-disclaimer">
+    ⚕ This analysis is generated by AI and is for educational purposes only. It is not a substitute for professional medical advice, diagnosis, or treatment. Please consult a qualified healthcare provider for any health concerns.
+  </div>
+</div>
+
+<script>
+  let selectedSymptoms = new Set();
+  let severity = '';
+
+  function toggleChip(el) {
+    const sym = el.textContent.trim();
+    if (el.classList.contains('active')) {
+      el.classList.remove('active');
+      selectedSymptoms.delete(sym);
+    } else {
+      el.classList.add('active');
+      selectedSymptoms.add(sym);
+    }
+    renderSelected();
+  }
+
+  function addCustom() {
+    const inp = document.getElementById('customSymptom');
+    const val = inp.value.trim();
+    if (!val) return;
+    selectedSymptoms.add(val);
+    inp.value = '';
+    renderSelected();
+  }
+
+  function removeSymptom(sym) {
+    selectedSymptoms.delete(sym);
+    document.querySelectorAll('#commonChips .chip').forEach(c => {
+      if (c.textContent.trim() === sym) c.classList.remove('active');
+    });
+    renderSelected();
+  }
+
+  function renderSelected() {
+    const el = document.getElementById('selectedSymptoms');
+    if (selectedSymptoms.size === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = [...selectedSymptoms].map(s =>
+      `<div class="selected-chip">${s}<button onclick="removeSymptom('${s.replace(/'/g,"\\'")}')">✕</button></div>`
+    ).join('');
+  }
+
+  function setSev(btn, val, cls) {
+    document.querySelectorAll('.sev-btn').forEach(b => b.className = 'sev-btn');
+    btn.classList.add(cls);
+    severity = val;
+  }
+
+  async function analyze() {
+    const name       = document.getElementById('name').value.trim();
+    const age        = document.getElementById('age').value.trim();
+    const sex        = document.getElementById('sex').value;
+    const weight     = document.getElementById('weight').value.trim();
+    const height     = document.getElementById('height').value.trim();
+    const duration   = document.getElementById('duration').value;
+    const conditions = document.getElementById('conditions').value.trim();
+    const symptoms   = [...selectedSymptoms];
+
+    if (!age || !symptoms.length) {
+      alert('Please enter your age and at least one symptom.');
+      return;
+    }
+
+    const btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    btn.innerHTML = 'Analyzing <span class="loading-dots"><span></span><span></span><span></span></span>';
+
+    const bmi = (weight && height)
+      ? (weight / ((height / 100) ** 2)).toFixed(1)
+      : null;
+
+    const prompt = `You are a medical information assistant. Analyze the following patient profile and symptoms, then suggest possible conditions.
+
+PATIENT PROFILE:
+- Name: ${name || 'Not provided'}
+- Age: ${age} years
+- Sex: ${sex || 'Not specified'}
+- Weight: ${weight ? weight + ' kg' : 'Not provided'}
+- Height: ${height ? height + ' cm' : 'Not provided'}
+${bmi ? `- BMI: ${bmi}` : ''}
+- Pre-existing conditions: ${conditions || 'None mentioned'}
+
+SYMPTOMS REPORTED:
+- Symptoms: ${symptoms.join(', ')}
+- Severity: ${severity || 'Not specified'}
+- Duration: ${duration || 'Not specified'}
+
+Please provide a structured analysis in this exact HTML format:
+
+<h3>Possible Conditions</h3>
+<ul>
+<li><strong>Condition Name</strong> — Brief explanation of why this fits the symptoms (1–2 sentences)</li>
+[3–5 conditions ordered by likelihood]
+</ul>
+
+<h3>Key Observations</h3>
+<ul>
+<li>Observation about symptom pattern</li>
+[2–3 observations]
+</ul>
+
+<h3>Recommended Next Steps</h3>
+<ul>
+<li>Specific action to take</li>
+[3–4 actionable steps, always end with: consult a qualified doctor or healthcare provider for a proper diagnosis]
+</ul>
+
+<div class="urgency-bar urgency-[low|med|high]">
+[🟢 or 🟡 or 🔴] <strong>Medical Urgency: [Low / Moderate / High]</strong> — [One-sentence reason]
+</div>
+
+Use urgency-low for low urgency, urgency-med for moderate, urgency-high for high. Be medically accurate but accessible. Output only the HTML above — no preamble, no markdown fences.`;
+
+    const resultsDiv  = document.getElementById('results');
+    const resultInner = document.getElementById('resultInner');
+    const displayName = name ? name.split(' ')[0] : 'Patient';
+
+    // Show results section with loading state
+    resultsDiv.style.display = 'block';
+    resultInner.innerHTML = `
+      <h2>Analysis for ${displayName}</h2>
+      <div class="result-meta">Age ${age}${sex ? ' · ' + sex : ''}${bmi ? ' · BMI ' + bmi : ''} · ${symptoms.length} symptom${symptoms.length > 1 ? 's' : ''} reported</div>
+      <div class="result-body" id="streamTarget">
+        <div class="result-loading" style="text-align:center;padding:32px 0;color:var(--text-muted);">
+          <div class="loading-dots" style="justify-content:center;margin-bottom:12px;">
+            <span></span><span></span><span></span>
+          </div>
+          <p style="font-size:0.85rem;">Consulting AI…</p>
+        </div>
+      </div>`;
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const streamTarget = document.getElementById('streamTarget');
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // ↓ Required header for direct browser access to the Anthropic API
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          stream: true,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      if (!response.ok) {
+        // Surface the real API error message
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+      }
+
+      // Stream the response token by token
+      const reader  = response.body.getReader();
+      const decoder = new TextDecoder();
+      let   buffer  = '';
+      let   fullText = '';
+      let   started  = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break;
+
+          let evt;
+          try { evt = JSON.parse(raw); } catch { continue; }
+
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            if (!started) {
+              // Replace loading spinner with streaming content on first token
+              streamTarget.innerHTML = '<span class="streaming-cursor"></span>';
+              started = true;
+            }
+            fullText += evt.delta.text;
+            // Render accumulated HTML; keep cursor at the end
+            const cursor = streamTarget.querySelector('.streaming-cursor');
+            if (cursor) {
+              cursor.insertAdjacentHTML('beforebegin', evt.delta.text);
+            }
+          }
+        }
+      }
+
+      // Remove cursor when done
+      const cursor = streamTarget.querySelector('.streaming-cursor');
+      if (cursor) cursor.remove();
+
+      // If nothing came through at all, show a fallback message
+      if (!fullText.trim()) {
+        streamTarget.innerHTML = '<p style="color:var(--text-muted)">The AI returned an empty response. Please try again.</p>';
+      }
+
+    } catch (err) {
+      streamTarget.innerHTML = `
+        <div class="error-msg">
+          <span class="error-icon">⚠</span>
+          <div>
+            <strong>Analysis failed.</strong><br>
+            ${err.message || 'An unexpected error occurred. Please try again.'}
+          </div>
+        </div>`;
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Analyze Symptoms';
+  }
+</script>
+</body>
+</html>
